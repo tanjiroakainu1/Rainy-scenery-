@@ -1,3 +1,4 @@
+import type { HouseInteraction } from '../world/woods'
 import type { MoveInput } from '../types/controls'
 
 type LookHandlers = {
@@ -14,7 +15,8 @@ type MobileControlsProps = {
   releaseKey: (key: keyof MoveInput) => void
   lookHandlers: LookHandlers
   nearbyNoteId: number | null
-  onReadNote: () => void
+  houseInteraction: HouseInteraction
+  onInteract: () => void
 }
 
 function KeyButton({
@@ -57,14 +59,24 @@ export function MobileControls({
   releaseKey,
   lookHandlers,
   nearbyNoteId,
-  onReadNote,
+  houseInteraction,
+  onInteract,
 }: MobileControlsProps) {
   if (!enabled) return null
 
-  const handleReadNote = (e: React.PointerEvent<HTMLButtonElement>) => {
+  const showInteract = nearbyNoteId !== null || houseInteraction !== null
+
+  const interactLabel =
+    nearbyNoteId !== null
+      ? 'Tap to Read Note'
+      : houseInteraction === 'enter'
+        ? 'Tap to Enter Cabin'
+        : 'Tap to Leave Cabin'
+
+  const handleInteract = (e: React.PointerEvent<HTMLButtonElement>) => {
     e.preventDefault()
     e.stopPropagation()
-    onReadNote()
+    onInteract()
   }
 
   return (
@@ -82,18 +94,18 @@ export function MobileControls({
       </div>
 
       {/* Read note — above controls, left of center (never under look zone) */}
-      {nearbyNoteId !== null && (
+      {showInteract && (
         <div className="absolute bottom-28 left-1/2 -translate-x-1/2 z-50 safe-bottom pointer-events-auto">
           <button
             type="button"
-            onPointerDown={handleReadNote}
-            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onReadNote() }}
+            onPointerDown={handleInteract}
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onInteract() }}
             className="font-horror px-8 py-3.5 text-xs sm:text-sm tracking-[0.2em] uppercase
               bg-blood/50 border-2 border-blood/70 text-stone-100 shadow-lg shadow-black/50
               active:bg-blood/70 active:scale-95 animate-pulse touch-manipulation select-none"
             style={{ touchAction: 'manipulation' }}
           >
-            Tap to Read Note
+            {interactLabel}
           </button>
         </div>
       )}

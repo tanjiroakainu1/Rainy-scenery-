@@ -24,7 +24,7 @@ export function StartScreen({ isMobile, onStart }: StartScreenProps) {
           Hollow Woods
         </h1>
         <p className="font-body text-stone-400 text-base sm:text-lg italic mb-8 leading-relaxed">
-          Rain in the pines. A pale moon. Papers nailed to bark. Figures waiting in the fog.
+          Rain in the pines. A pale moon. Blood-stained papers nailed to bark. Seven walkers before you — their names carved into the posts.
         </p>
 
         <button
@@ -41,8 +41,8 @@ export function StartScreen({ isMobile, onStart }: StartScreenProps) {
           {isMobile ? (
             <>
               <p>Use <strong>W A S D</strong> to walk the forest</p>
-              <p>Drag right side to look · Find all 8 notes on trees &amp; posts</p>
-              <p>Follow the fires — a backpack waits at the first campfire west of start</p>
+              <p>Drag right side to look · Find all 8 blood-stained notes on trees &amp; posts</p>
+              <p>Follow walker &ldquo;M&rdquo;&rsquo;s trail · Cabin &amp; car west of campfire #1 · [E] to enter the house</p>
             </>
           ) : (
             <>
@@ -56,7 +56,7 @@ export function StartScreen({ isMobile, onStart }: StartScreenProps) {
                 <kbd className="px-1.5 py-0.5 border border-stone-600 rounded text-stone-400 text-xs">D</kbd>
                 {' '}walk · <kbd className="px-1.5 py-0.5 border border-stone-600 rounded text-stone-400 text-xs">E</kbd> read notes
               </p>
-              <p>Explore the wide forest · 8 hidden papers · Fires mark the trail · Backpack at the first campfire</p>
+              <p>Find all 8 bloody notes · Follow the trail of walker &ldquo;M&rdquo; · Cabin &amp; car west of campfire #1</p>
             </>
           )}
         </div>

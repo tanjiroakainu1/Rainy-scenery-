@@ -10,16 +10,20 @@ export const WOODS = {
   mobileLookSensitivity: 0.006,
   treeRadius: 0.42,
   notePickupDistance: 2.8,
+  houseInteractDistance: 2.4,
 } as const
 
 export const COLORS = {
-  grass: '#243028',
-  grassLight: '#2c382c',
-  path: '#2e2a24',
+  grass: '#1a241c',
+  grassLight: '#243028',
+  grassDark: '#141c14',
+  path: '#2a2620',
   bark: '#3a3024',
   barkDead: '#4a3830',
-  foliage: '#1e2c22',
-  foliageDead: '#242c24',
+  foliage: '#1a2a1e',
+  foliageMid: '#243428',
+  foliageDark: '#141e18',
+  foliageDead: '#2a3028',
   fog: '#141c24',
   mist: '#1a242c',
   sky: '#0e141c',
@@ -33,10 +37,23 @@ export const COLORS = {
   fireCore: '#ffcc55',
   ember: '#ff6622',
   stone: '#3a3632',
-  backpack: '#2a3428',
-  backpackStrap: '#1a2018',
+  backpack: '#3a4230',
+  backpackStrap: '#2a3024',
+  shirt: '#4a6070',
+  jeans: '#2a3440',
+  skin: '#c4a882',
+  hair: '#3a2c24',
+  houseWall: '#4a3c30',
+  houseLog: '#6a5444',
+  houseLogDark: '#4a382c',
+  houseRoof: '#2e2824',
+  houseTrim: '#7a6450',
+  carBody: '#2a3830',
+  carBodyDark: '#1a221c',
+  carGlass: '#3a4a52',
+  carChrome: '#6a7078',
   blood: '#5a1818',
-  paper: '#d8ccb0',
+  paper: '#c8b498',
 } as const
 
 /** Fixed moon in the north-west sky — visible above the tree line from spawn */
@@ -52,6 +69,26 @@ export type TreeDef = {
   scale: number
   dead: boolean
   isNoteTree?: boolean
+  rotationY?: number
+  variant?: 'pine' | 'tall' | 'wide' | 'sapling'
+}
+
+export type BushDef = {
+  position: [number, number, number]
+  scale: number
+  rotationY: number
+}
+
+export type RockDef = {
+  position: [number, number, number]
+  scale: number
+  rotationY: number
+}
+
+export type LogDef = {
+  position: [number, number, number]
+  scale: number
+  rotationY: number
 }
 
 export type PostDef = {
@@ -76,7 +113,32 @@ export type CampfireDef = {
   rotationY: number
   hasBackpack: boolean
   scale: number
+  seatedOffset: [number, number, number]
+  seatedRotation: number
+  seatedVariant: number
 }
+
+export type HouseDef = {
+  id: string
+  position: [number, number, number]
+  rotationY: number
+  mapX: number
+  mapZ: number
+  doorPosition: [number, number, number]
+  interiorSpawn: [number, number, number]
+  exitSpawn: [number, number, number]
+  interiorBounds: { minX: number; maxX: number; minZ: number; maxZ: number }
+}
+
+export type VehicleDef = {
+  id: string
+  position: [number, number, number]
+  rotationY: number
+  mapX: number
+  mapZ: number
+}
+
+export type HouseInteraction = 'enter' | 'exit' | null
 
 export type PathTorchDef = {
   position: [number, number, number]
@@ -125,10 +187,15 @@ export type NoteAnchor = {
 
 export type WoodsWorld = {
   trees: TreeDef[]
+  bushes: BushDef[]
+  rocks: RockDef[]
+  logs: LogDef[]
   posts: PostDef[]
   figures: FigureDef[]
   campfires: CampfireDef[]
   pathTorches: PathTorchDef[]
+  house: HouseDef
+  vehicle: VehicleDef
   notes: NoteAnchor[]
   spawn: [number, number, number]
   bounds: { minX: number; maxX: number; minZ: number; maxZ: number }
@@ -210,11 +277,43 @@ export function buildWoodsWorld(): WoodsWorld {
   ]
 
   const campfires: CampfireDef[] = [
-    { id: 'cf-main', position: [-6.5, 0, 96], mapX: -6.5, mapZ: 96, label: '1', rotationY: 0.35, hasBackpack: true, scale: 1.15 },
-    { id: 'cf-mid', position: [5.5, 0, 22], mapX: 5.5, mapZ: 22, label: '2', rotationY: -0.5, hasBackpack: false, scale: 1 },
-    { id: 'cf-center', position: [-7, 0, -4], mapX: -7, mapZ: -4, label: '3', rotationY: 0.8, hasBackpack: false, scale: 1 },
-    { id: 'cf-north', position: [6, 0, -88], mapX: 6, mapZ: -88, label: '4', rotationY: -0.25, hasBackpack: false, scale: 0.95 },
+    {
+      id: 'cf-main',
+      position: [-6.5, 0, 96],
+      mapX: -6.5,
+      mapZ: 96,
+      label: '1',
+      rotationY: 0,
+      hasBackpack: true,
+      scale: 1.15,
+      seatedOffset: [-1.05, 0, -0.72],
+      seatedRotation: 0.85,
+      seatedVariant: 0,
+    },
+    { id: 'cf-mid', position: [5.5, 0, 22], mapX: 5.5, mapZ: 22, label: '2', rotationY: -0.5, hasBackpack: false, scale: 1, seatedOffset: [-1.1, 0, 0.3], seatedRotation: 0.5, seatedVariant: 1 },
+    { id: 'cf-center', position: [-7, 0, -4], mapX: -7, mapZ: -4, label: '3', rotationY: 0.8, hasBackpack: false, scale: 1, seatedOffset: [1.1, 0, -0.35], seatedRotation: -2.35, seatedVariant: 2 },
+    { id: 'cf-north', position: [6, 0, -88], mapX: 6, mapZ: -88, label: '4', rotationY: -0.25, hasBackpack: false, scale: 0.95, seatedOffset: [-1.05, 0, 0.35], seatedRotation: 0.55, seatedVariant: 3 },
   ]
+
+  const house: HouseDef = {
+    id: 'cabin',
+    position: [-19.0, 0, 87],
+    rotationY: 0,
+    mapX: -19.0,
+    mapZ: 87,
+    doorPosition: [-15.2, 0, 87],
+    interiorSpawn: [-16.8, WOODS.eyeY, 87],
+    exitSpawn: [-14.8, WOODS.eyeY, 87],
+    interiorBounds: { minX: -22.4, maxX: -15.6, minZ: 83.2, maxZ: 90.8 },
+  }
+
+  const vehicle: VehicleDef = {
+    id: 'car',
+    position: [-9.4, 0, 98.0],
+    rotationY: -Math.PI / 2,
+    mapX: -9.4,
+    mapZ: 98.0,
+  }
 
   const pathTorches: PathTorchDef[] = [
     { position: [3.6, 0, 108], mapX: 3.6, mapZ: 108, rotationY: -Math.PI / 2 },
@@ -228,6 +327,12 @@ export function buildWoodsWorld(): WoodsWorld {
 
   const isNearCampfire = (x: number, z: number, clearance = 5.5) =>
     campfires.some((cf) => dist2d(x, z, cf.position[0], cf.position[2]) < clearance)
+
+  const isNearHouse = (x: number, z: number, clearance = 12) =>
+    dist2d(x, z, house.position[0], house.position[2]) < clearance
+
+  const isNearVehicle = (x: number, z: number, clearance = 6) =>
+    dist2d(x, z, vehicle.position[0], vehicle.position[2]) < clearance
 
   const isNearPath = (x: number, z: number, clearance: number) => {
     for (let i = 0; i < pathPoints.length - 1; i++) {
@@ -245,25 +350,40 @@ export function buildWoodsWorld(): WoodsWorld {
     return false
   }
 
-  for (let gx = -hw + 8; gx <= hw - 8; gx += 8) {
-    for (let gz = -hd + 8; gz <= hd - 8; gz += 7) {
-      const jitterX = (seededRandom(seed++) - 0.5) * 6
-      const jitterZ = (seededRandom(seed++) - 0.5) * 5
+  for (let gx = -hw + 6; gx <= hw - 6; gx += 6) {
+    for (let gz = -hd + 6; gz <= hd - 6; gz += 5.5) {
+      const jitterX = (seededRandom(seed++) - 0.5) * 5
+      const jitterZ = (seededRandom(seed++) - 0.5) * 4.5
       const x = gx + jitterX
       const z = gz + jitterZ
-      if (isNearPath(x, z, 6)) continue
+      if (isNearPath(x, z, 5.5)) continue
       if (isNearCampfire(x, z)) continue
+      if (isNearHouse(x, z)) continue
+      if (isNearVehicle(x, z)) continue
       if (dist2d(x, z, 0, hd - 6) < 4) continue
+      const dead = seededRandom(seed++) > 0.88
+      const vr = seededRandom(seed++)
+      const variant: TreeDef['variant'] = dead
+        ? undefined
+        : vr < 0.5
+          ? 'pine'
+          : vr < 0.72
+            ? 'tall'
+            : vr < 0.9
+              ? 'wide'
+              : 'sapling'
       trees.push({
         id: id++,
         position: [x, 0, z],
-        scale: 0.8 + seededRandom(seed++) * 0.6,
-        dead: seededRandom(seed++) > 0.85,
+        scale: 0.75 + seededRandom(seed++) * 0.7,
+        dead,
+        rotationY: seededRandom(seed++) * Math.PI * 2,
+        variant,
       })
     }
   }
 
-  for (let i = 0; i < 80; i++) {
+  for (let i = 0; i < 140; i++) {
     const edge = seededRandom(seed++) > 0.5
     const x = edge
       ? (seededRandom(seed++) > 0.5 ? -1 : 1) * (hw - 4 - seededRandom(seed++) * 12)
@@ -274,8 +394,52 @@ export function buildWoodsWorld(): WoodsWorld {
     trees.push({
       id: id++,
       position: [x, 0, z],
-      scale: 0.9 + seededRandom(seed++) * 0.55,
-      dead: seededRandom(seed++) > 0.75,
+      scale: 0.85 + seededRandom(seed++) * 0.65,
+      dead: seededRandom(seed++) > 0.72,
+      rotationY: seededRandom(seed++) * Math.PI * 2,
+      variant: seededRandom(seed++) > 0.5 ? 'tall' : 'pine',
+    })
+  }
+
+  const bushes: BushDef[] = []
+  const rocks: RockDef[] = []
+  const logs: LogDef[] = []
+
+  for (let i = 0; i < 220; i++) {
+    const x = (seededRandom(seed++) - 0.5) * (hw * 2 - 20)
+    const z = (seededRandom(seed++) - 0.5) * (hd * 2 - 20)
+    if (isNearPath(x, z, 4)) continue
+    if (isNearCampfire(x, z, 4)) continue
+    if (isNearHouse(x, z, 8)) continue
+    if (isNearVehicle(x, z, 4)) continue
+    bushes.push({
+      position: [x, 0, z],
+      scale: 0.35 + seededRandom(seed++) * 0.55,
+      rotationY: seededRandom(seed++) * Math.PI * 2,
+    })
+  }
+
+  for (let i = 0; i < 70; i++) {
+    const x = (seededRandom(seed++) - 0.5) * (hw * 2 - 16)
+    const z = (seededRandom(seed++) - 0.5) * (hd * 2 - 16)
+    if (isNearPath(x, z, 3.5)) continue
+    if (isNearCampfire(x, z, 4)) continue
+    rocks.push({
+      position: [x, 0, z],
+      scale: 0.2 + seededRandom(seed++) * 0.45,
+      rotationY: seededRandom(seed++) * Math.PI * 2,
+    })
+  }
+
+  for (let i = 0; i < 55; i++) {
+    const x = (seededRandom(seed++) - 0.5) * (hw * 2 - 16)
+    const z = (seededRandom(seed++) - 0.5) * (hd * 2 - 16)
+    if (isNearPath(x, z, 3)) continue
+    if (isNearCampfire(x, z, 5)) continue
+    logs.push({
+      position: [x, 0, z],
+      scale: 0.5 + seededRandom(seed++) * 0.8,
+      rotationY: seededRandom(seed++) * Math.PI * 2,
     })
   }
 
@@ -304,8 +468,8 @@ export function buildWoodsWorld(): WoodsWorld {
       postIdx: 0,
       pathLook: [0, hd - 22],
       title: 'Note 1 of 8',
-      text: 'If you can read this, you are already on the path.\n\nThe forest is wide — wider than you think. Walk NORTH along the dirt trail. Do not leave it. The trees are closer together in the dark.',
-      clue: '→ Follow the path NORTH from the green start marker on your map.',
+      text: 'They found my pack at the south edge. Empty.\n\nIf you can read this, you already walked too far from the road. I pinned these in order — each page stains a little darker than the last.\n\nWalk NORTH along the dirt. Do not leave the path. The pines lean in when you stray.\n\n— M.',
+      clue: '→ Follow the path NORTH from the start marker on your map.',
     },
     {
       id: 2,
@@ -313,7 +477,7 @@ export function buildWoodsWorld(): WoodsWorld {
       treePos: [-6.5, hd - 42],
       pathLook: [0, hd - 42],
       title: 'Note 2 of 8',
-      text: 'I left these pages in order. Each one tells you where the next is hiding.\n\nNote 2 is west of the path — you found it. Note 3 is nailed EAST of the trail, far north near the wide bend at z ≈ 55 on the map.',
+      text: 'M again. Sorry about the stain — not all of it is mine.\n\nSomeone sits by the first campfire every night. Don\'t trust the warmth. The rain washes footprints away. Not the blood.\n\nI heard singing from the cabin west of that fire. No one answers when you knock.',
       clue: '→ Next paper: EAST side of path, far north (right side on map).',
     },
     {
@@ -322,8 +486,8 @@ export function buildWoodsWorld(): WoodsWorld {
       treePos: [7, 55],
       pathLook: [3, 55],
       title: 'Note 3 of 8',
-      text: 'The figures in the fog are not people. Count them on the map — grey squares. Seven watchers. They stand where the path turns.\n\nDo NOT walk up to the ones holding papers. Read the notes instead.',
-      clue: '→ Avoid watchers with papers. Note 4 is WEST at map center-left (x ≈ -45).',
+      text: 'The grey figures on your map aren\'t lost hikers. I counted seven. They don\'t blink in the moonlight.\n\nOne held a paper just like this — blank on both sides. When I looked again, my name was on it. In my handwriting.\n\nDo NOT walk up to the ones holding pages. Read the nails instead.',
+      clue: '→ Note 4 is WEST, deep center-left of the forest.',
     },
     {
       id: 4,
@@ -331,8 +495,8 @@ export function buildWoodsWorld(): WoodsWorld {
       treePos: [-46, 8],
       pathLook: [-10, 0],
       title: 'Note 4 of 8',
-      text: 'ELIAS carved his name here. Under it: HE NEVER FOUND NOTE FIVE.\n\nFive is on the opposite side — EAST of the path at z ≈ -20. Look for a dead tree. The paper is nailed low.',
-      clue: '→ Note 5: EAST of path, mid-forest south (x ≈ +50, z ≈ -20).',
+      text: 'ELIAS\n(he carved it deep)\nHE NEVER FOUND NOTE FIVE\n\nFresh sap covers old blood. I think Elias is still here — just not in one piece.\n\nFive is east of the path, south in the woods. A dead pine. The paper is nailed LOW. Kneel. You\'ll see why.',
+      clue: '→ Note 5: EAST of path, mid-forest south — dead tree.',
     },
     {
       id: 5,
@@ -340,8 +504,8 @@ export function buildWoodsWorld(): WoodsWorld {
       treePos: [52, -18],
       pathLook: [6, -50],
       title: 'Note 5 of 8',
-      text: 'My lantern died facing east. Yours will too if you stare into the trees too long.\n\nSix is on a post at the CENTER of the forest — west of the path where the trail bends (z ≈ 15 on the map).',
-      clue: '→ Note 6: wooden post WEST of path at map center (z ≈ 15).',
+      text: 'My hands won\'t stop shaking. Whatever took Elias left these smears — three fingers, dragged downward.\n\nThe lantern by the path died when I looked east. Yours will too if you stare too long into the trees.\n\nI can hear the car engine ticking west of the fire. It hasn\'t run in years.',
+      clue: '→ Note 6: wooden post WEST of path at map center.',
     },
     {
       id: 6,
@@ -349,8 +513,8 @@ export function buildWoodsWorld(): WoodsWorld {
       postIdx: 1,
       pathLook: [-5, 15],
       title: 'Note 6 of 8',
-      text: 'Seven notes before the last. Seven watchers before the truth.\n\nThe final two are at the far NORTH edge and back at the START. Seven is west at the north end. Eight is on the post you passed when you entered.',
-      clue: '→ Note 7: far NORTH (top of map). Note 8: START post (south, near green circle).',
+      text: 'The cabin west of campfire #1 has papers on the walls. Older than mine. The stove is still warm. Boots by the door. A bed that\'s been slept in.\n\nSeven watchers. Eight notes. Two left.\n\nThe forest drinks the rain. It remembers what sinks into the dirt.',
+      clue: '→ Note 7: far NORTH edge. Note 8: the post where you began.',
     },
     {
       id: 7,
@@ -358,8 +522,8 @@ export function buildWoodsWorld(): WoodsWorld {
       treePos: [-7, -hd + 28],
       pathLook: [-4, -hd + 15],
       title: 'Note 7 of 8',
-      text: 'I am the eighth walker. There were seven before me. Their names are on the posts.\n\nThe last page is on the post you passed at the beginning. Turn back SOUTH if you dare. Or keep walking north — the trees never end.',
-      clue: '→ Note 8: SOUTH post near spawn. Then leave the way you came in.',
+      text: 'I am the eighth walker. There were seven before me. Their names are on the posts — carved, not written.\n\nThe rain never stops in the Hollow Woods. Somewhere behind you, the campfire still burns. Someone is always sitting there.\n\nLast page: your starting post. Read it. Then RUN south.',
+      clue: '→ Note 8: SOUTH post near spawn — then escape south along the path.',
     },
     {
       id: 8,
@@ -367,8 +531,8 @@ export function buildWoodsWorld(): WoodsWorld {
       postIdx: 2,
       pathLook: [0, hd - 14],
       title: 'Note 8 of 8 — FINAL',
-      text: 'You found them all.\n\nTHE TRUTH: The forest keeps you by making you walk forever. The only exit is the SOUTH edge where you spawned. Run south along the path. Do not look at the watchers. Do not stop.\n\nIt knows you read this.',
-      clue: '→ ESCAPE: run SOUTH back to the green start circle on the map.',
+      text: 'You found them all.\n\nTHE HOLLOW WOODS keeps walkers by making them circle forever. I see my own handwriting on pages I never wrote. The blood on these nails isn\'t all from the same hand.\n\nThe only exit is SOUTH — where you spawned. Run the path. Don\'t look at the watchers. Don\'t sit by the fire.\n\nIt knows you read this.',
+      clue: '→ ESCAPE: run SOUTH back to the start circle on the map.',
     },
   ]
 
@@ -424,10 +588,11 @@ export function buildWoodsWorld(): WoodsWorld {
   })
 
   const mapClearings = [
-    ...campfires.map((cf) => ({
+    { x: -8.5, z: 96.5, r: 16 },
+    ...campfires.filter((cf) => !cf.hasBackpack).map((cf) => ({
       x: cf.mapX,
       z: cf.mapZ,
-      r: cf.hasBackpack ? 10 : 8,
+      r: 8,
     })),
     { x: -55, z: 60, r: 16 },
     { x: 60, z: -30, r: 18 },
@@ -437,10 +602,15 @@ export function buildWoodsWorld(): WoodsWorld {
 
   return {
     trees,
+    bushes,
+    rocks,
+    logs,
     posts,
     figures,
     campfires,
     pathTorches,
+    house,
+    vehicle,
     notes,
     spawn: [0, WOODS.eyeY, hd - 8] as [number, number, number],
     bounds: { minX: -hw + 2, maxX: hw - 2, minZ: -hd + 2, maxZ: hd - 2 },
@@ -487,4 +657,46 @@ export function resolveWoodsMovement(
   tryMove('z', target.z)
   result.y = WOODS.eyeY
   return result
+}
+
+export function resolveHouseMovement(
+  current: THREE.Vector3,
+  target: THREE.Vector3,
+  house: HouseDef,
+): THREE.Vector3 {
+  const result = current.clone()
+  const { interiorBounds: b } = house
+
+  const tryMove = (axis: 'x' | 'z', value: number) => {
+    const test = result.clone()
+    test[axis] = value
+    test.x = THREE.MathUtils.clamp(test.x, b.minX, b.maxX)
+    test.z = THREE.MathUtils.clamp(test.z, b.minZ, b.maxZ)
+    test.y = WOODS.eyeY
+    result.copy(test)
+  }
+
+  tryMove('x', target.x)
+  tryMove('z', target.z)
+  result.y = WOODS.eyeY
+  return result
+}
+
+export function getHouseInteraction(
+  x: number,
+  z: number,
+  insideHouse: boolean,
+  house: HouseDef,
+): HouseInteraction {
+  const [dx, , dz] = house.doorPosition
+  const dist = dist2d(x, z, dx, dz)
+
+  if (!insideHouse && dist < WOODS.houseInteractDistance) return 'enter'
+
+  if (insideHouse) {
+    const [ix, , iz] = house.interiorSpawn
+    if (dist2d(x, z, ix, iz) < WOODS.houseInteractDistance) return 'exit'
+  }
+
+  return null
 }

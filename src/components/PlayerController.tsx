@@ -2,7 +2,13 @@ import { useEffect, useRef } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import type { MoveInput } from '../types/controls'
-import { getWoodsWorld, WOODS, resolveWoodsMovement } from '../world/woods'
+import {
+  getWoodsWorld,
+  WOODS,
+  resolveWoodsMovement,
+  resolveHouseMovement,
+  type HouseDef,
+} from '../world/woods'
 
 export type PlayerState = {
   x: number
@@ -11,11 +17,20 @@ export type PlayerState = {
   yaw: number
 }
 
+export type TeleportRequest = {
+  id: number
+  position: [number, number, number]
+  yaw?: number
+}
+
 type PlayerControllerProps = {
   moveInput: React.MutableRefObject<MoveInput>
   lookInput: React.MutableRefObject<{ deltaX: number; deltaY: number }>
   enabled: boolean
   isMobile: boolean
+  insideHouse: boolean
+  house: HouseDef
+  teleport?: TeleportRequest | null
   onPositionUpdate?: (state: PlayerState) => void
 }
 
@@ -27,6 +42,9 @@ export function PlayerController({
   lookInput,
   enabled,
   isMobile,
+  insideHouse,
+  house,
+  teleport,
   onPositionUpdate,
 }: PlayerControllerProps) {
   const { camera } = useThree()
@@ -49,6 +67,12 @@ export function PlayerController({
     yaw.current = 0
     pitch.current = 0
   }, [camera])
+
+  useEffect(() => {
+    if (!teleport) return
+    position.current.set(teleport.position[0], teleport.position[1], teleport.position[2])
+    if (teleport.yaw !== undefined) yaw.current = teleport.yaw
+  }, [teleport?.id, teleport])
 
   useEffect(() => {
     if (isMobile) return
@@ -100,14 +124,22 @@ export function PlayerController({
       target.current.copy(position.current)
       target.current.x += direction.current.x * speed
       target.current.z += direction.current.z * speed
-      position.current.copy(resolveWoodsMovement(position.current, target.current, world))
+
+      position.current.copy(
+        insideHouse
+          ? resolveHouseMovement(position.current, target.current, house)
+          : resolveWoodsMovement(position.current, target.current, world),
+      )
     }
 
     const moving = moveInput.current.forward || moveInput.current.backward ||
       moveInput.current.left || moveInput.current.right
     const bob = enabled && moving ? Math.sin(state.clock.elapsedTime * 10) * 0.02 : 0
+    const rainSway = enabled && !insideHouse
+      ? Math.sin(state.clock.elapsedTime * 16) * 0.006 + Math.sin(state.clock.elapsedTime * 23) * 0.003
+      : 0
 
-    camera.position.set(position.current.x, position.current.y + bob, position.current.z)
+    camera.position.set(position.current.x, position.current.y + bob + rainSway, position.current.z)
     camera.rotation.order = 'YXZ'
     camera.rotation.y = yaw.current
     camera.rotation.x = pitch.current
@@ -135,17 +167,19 @@ export function PlayerController({
       <pointLight
         position={[0.3, -0.05, -0.45]}
         color="#ffdd99"
-        intensity={5}
-        distance={32}
+        intensity={insideHouse ? 3 : 5}
+        distance={insideHouse ? 22 : 32}
         decay={1.1}
       />
-      <pointLight
-        position={[0, 0.2, 0]}
-        color="#809070"
-        intensity={1.2}
-        distance={8}
-        decay={1.5}
-      />
+      {!insideHouse && (
+        <pointLight
+          position={[0, 0.2, 0]}
+          color="#809070"
+          intensity={1.2}
+          distance={8}
+          decay={1.5}
+        />
+      )}
     </group>
   )
 }

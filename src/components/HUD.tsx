@@ -1,4 +1,5 @@
 import type * as THREE from 'three'
+import type { HouseInteraction } from '../world/woods'
 import { Minimap } from './Minimap'
 import { DeveloperCredit } from './DeveloperCredit'
 
@@ -8,10 +9,11 @@ type HUDProps = {
   notesFound: number
   totalNotes: number
   nearbyNoteId: number | null
+  houseInteraction: HouseInteraction
+  insideHouse: boolean
   playerPos: THREE.Vector3 | null
   playerYaw: number
   collectedIds: Set<number>
-  onCollectNote?: () => void
 }
 
 export function HUD({
@@ -20,6 +22,8 @@ export function HUD({
   notesFound,
   totalNotes,
   nearbyNoteId,
+  houseInteraction,
+  insideHouse,
   playerPos,
   playerYaw,
   collectedIds,
@@ -47,9 +51,14 @@ export function HUD({
           <p className="font-horror text-[10px] sm:text-xs text-ember/70 tracking-[0.25em] uppercase">
             The Hollow Woods
           </p>
-          {!allFound && (
+          {!allFound && !insideHouse && (
             <p className="font-body text-stone-400/80 text-xs sm:text-sm italic animate-pulse-slow mt-1 leading-snug">
-              Read each note — orange fires on the map mark campfires · #1 has the backpack
+              Rain in the pines · Orange fires = campfires · Cabin &amp; car west of fire #1 · [E] to enter
+            </p>
+          )}
+          {insideHouse && (
+            <p className="font-body text-stone-400/80 text-xs sm:text-sm italic animate-pulse-slow mt-1 leading-snug">
+              Look around the cabin — table, shelves, wall note · [E] at door to leave
             </p>
           )}
           {allFound && (
@@ -70,6 +79,22 @@ export function HUD({
         <div className="absolute bottom-20 sm:bottom-24 left-1/2 -translate-x-1/2 safe-bottom pointer-events-none">
           <p className="font-horror text-xs sm:text-sm text-stone-300 tracking-[0.2em] uppercase animate-pulse">
             Press [E] to read note
+          </p>
+        </div>
+      )}
+
+      {houseInteraction === 'enter' && !isMobile && (
+        <div className="absolute bottom-20 sm:bottom-24 left-1/2 -translate-x-1/2 safe-bottom pointer-events-none">
+          <p className="font-horror text-xs sm:text-sm text-stone-300 tracking-[0.2em] uppercase animate-pulse">
+            Press [E] to enter cabin
+          </p>
+        </div>
+      )}
+
+      {houseInteraction === 'exit' && !isMobile && (
+        <div className="absolute bottom-20 sm:bottom-24 left-1/2 -translate-x-1/2 safe-bottom pointer-events-none">
+          <p className="font-horror text-xs sm:text-sm text-stone-300 tracking-[0.2em] uppercase animate-pulse">
+            Press [E] to leave cabin
           </p>
         </div>
       )}

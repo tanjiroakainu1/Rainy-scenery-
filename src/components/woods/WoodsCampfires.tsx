@@ -2,6 +2,7 @@ import { memo, useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { COLORS, type CampfireDef, type PathTorchDef } from '../../world/woods'
+import { SeatedPerson } from './SeatedPerson'
 
 type WoodsCampfiresProps = {
   campfires: CampfireDef[]
@@ -12,29 +13,30 @@ function Backpack({ scale = 1 }: { scale?: number }) {
   const bodyMat = useMemo(() => new THREE.MeshLambertMaterial({ color: COLORS.backpack }), [])
   const strapMat = useMemo(() => new THREE.MeshLambertMaterial({ color: COLORS.backpackStrap }), [])
   const buckleMat = useMemo(() => new THREE.MeshLambertMaterial({ color: '#5a5040' }), [])
+  const zipMat = useMemo(() => new THREE.MeshLambertMaterial({ color: '#6a6050' }), [])
 
   return (
-    <group scale={scale} rotation={[0, -0.55, 0]}>
-      <mesh position={[0, 0.24, 0]} material={bodyMat}>
-        <boxGeometry args={[0.42, 0.46, 0.22]} />
+    <group scale={scale} rotation={[0.12, -0.45, 0.08]} position={[0, 0.12, 0]}>
+      <mesh position={[0, 0.14, 0]} material={bodyMat}>
+        <boxGeometry args={[0.44, 0.32, 0.24]} />
       </mesh>
-      <mesh position={[0, 0.48, -0.02]} material={bodyMat}>
-        <boxGeometry args={[0.34, 0.14, 0.18]} />
+      <mesh position={[0, 0.28, -0.04]} material={bodyMat}>
+        <boxGeometry args={[0.36, 0.12, 0.2]} />
       </mesh>
-      <mesh position={[0, 0.14, 0.12]} material={strapMat}>
-        <boxGeometry args={[0.36, 0.08, 0.04]} />
+      <mesh position={[0, 0.2, 0.13]} material={zipMat}>
+        <boxGeometry args={[0.04, 0.2, 0.02]} />
       </mesh>
-      <mesh position={[-0.14, 0.34, 0.12]} material={strapMat}>
-        <boxGeometry args={[0.05, 0.32, 0.04]} />
+      <mesh position={[0, 0.08, 0.13]} material={strapMat}>
+        <boxGeometry args={[0.38, 0.06, 0.05]} />
       </mesh>
-      <mesh position={[0.14, 0.34, 0.12]} material={strapMat}>
-        <boxGeometry args={[0.05, 0.32, 0.04]} />
+      <mesh position={[-0.15, 0.18, 0.13]} material={strapMat}>
+        <boxGeometry args={[0.05, 0.24, 0.05]} />
       </mesh>
-      <mesh position={[0, 0.3, 0.13]} material={buckleMat}>
-        <boxGeometry args={[0.08, 0.06, 0.03]} />
+      <mesh position={[0.15, 0.18, 0.13]} material={strapMat}>
+        <boxGeometry args={[0.05, 0.24, 0.05]} />
       </mesh>
-      <mesh position={[0.18, 0.08, -0.02]} rotation={[0, 0, 0.25]} material={strapMat}>
-        <boxGeometry args={[0.04, 0.22, 0.03]} />
+      <mesh position={[0, 0.16, 0.14]} material={buckleMat}>
+        <boxGeometry args={[0.09, 0.06, 0.03]} />
       </mesh>
     </group>
   )
@@ -53,7 +55,11 @@ function Campfire({
   const stoneMat = useMemo(() => new THREE.MeshLambertMaterial({ color: COLORS.stone }), [])
   const logMat = useMemo(() => new THREE.MeshLambertMaterial({ color: '#2a2018' }), [])
   const charMat = useMemo(
-    () => new THREE.MeshBasicMaterial({ color: '#1a1410', transparent: true, opacity: 0.55 }),
+    () => new THREE.MeshBasicMaterial({ color: '#1a1410', transparent: true, opacity: 0.45 }),
+    [],
+  )
+  const emberMat = useMemo(
+    () => new THREE.MeshBasicMaterial({ color: '#ff6622', transparent: true, opacity: 0.7 }),
     [],
   )
   const fireOuterMat = useMemo(
@@ -64,6 +70,15 @@ function Campfire({
     () => new THREE.MeshBasicMaterial({ color: COLORS.fireCore, transparent: true, opacity: 0.95 }),
     [],
   )
+  const glowMat = useMemo(
+    () => new THREE.MeshBasicMaterial({ color: '#ff8833', transparent: true, opacity: 0.18 }),
+    [],
+  )
+  const smokeMat = useMemo(
+    () => new THREE.MeshBasicMaterial({ color: '#2a2a30', transparent: true, opacity: 0.22 }),
+    [],
+  )
+  const benchMat = useMemo(() => new THREE.MeshLambertMaterial({ color: '#3a2818' }), [])
 
   const stoneCount = 8
   const stones = useMemo(
@@ -77,9 +92,26 @@ function Campfire({
 
   return (
     <group position={def.position} rotation={[0, def.rotationY, 0]} scale={s}>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.015, 0]} material={charMat}>
-        <circleGeometry args={[0.85, 12]} />
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.012, 0]} material={charMat}>
+        <circleGeometry args={[1.0, 14]} />
       </mesh>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.016, 0]} material={emberMat}>
+        <circleGeometry args={[0.35, 10]} />
+      </mesh>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.014, 0]} material={glowMat}>
+        <circleGeometry args={[1.35, 16]} />
+      </mesh>
+
+      {def.hasBackpack && (
+        <>
+          <mesh position={[-0.85, 0.06, 0.35]} rotation={[0, 0.2, Math.PI / 2]} material={benchMat}>
+            <cylinderGeometry args={[0.06, 0.07, 0.55, 6]} />
+          </mesh>
+          <mesh position={[0.75, 0.06, -0.55]} rotation={[0, -0.15, Math.PI / 2]} material={benchMat}>
+            <cylinderGeometry args={[0.055, 0.065, 0.5, 6]} />
+          </mesh>
+        </>
+      )}
 
       {stones.map((stone, i) => (
         <mesh key={i} position={[stone.x, 0.08, stone.z]} rotation={[0, stone.ry, 0]} material={stoneMat}>
@@ -98,28 +130,42 @@ function Campfire({
       </mesh>
 
       <group ref={fireRef} position={[0, 0.18, 0]}>
-        <mesh position={[0, 0.22, 0]} material={fireOuterMat}>
-          <coneGeometry args={[0.28, 0.55, 6]} />
+        <mesh position={[0, 0.1, 0]} material={emberMat}>
+          <cylinderGeometry args={[0.2, 0.24, 0.08, 8]} />
         </mesh>
-        <mesh position={[0, 0.16, 0]} material={fireCoreMat}>
-          <coneGeometry args={[0.16, 0.38, 6]} />
+        <mesh position={[0.08, 0.22, 0.04]} material={fireOuterMat}>
+          <coneGeometry args={[0.18, 0.42, 6]} />
+        </mesh>
+        <mesh position={[-0.06, 0.2, -0.05]} material={fireOuterMat}>
+          <coneGeometry args={[0.15, 0.36, 6]} />
+        </mesh>
+        <mesh position={[0, 0.24, 0]} material={fireOuterMat}>
+          <coneGeometry args={[0.26, 0.5, 7]} />
+        </mesh>
+        <mesh position={[0, 0.18, 0]} material={fireCoreMat}>
+          <coneGeometry args={[0.14, 0.34, 7]} />
+        </mesh>
+        <mesh position={[0, 0.55, 0]} material={smokeMat}>
+          <coneGeometry args={[0.12, 0.35, 5]} />
         </mesh>
       </group>
 
       <pointLight
         ref={lightRef}
         position={[0, 0.45, 0]}
-        color={COLORS.fireCore}
-        intensity={def.hasBackpack ? 14 : 11}
-        distance={def.hasBackpack ? 28 : 24}
-        decay={1.25}
+        color="#ffbb66"
+        intensity={def.hasBackpack ? 9 : 7}
+        distance={def.hasBackpack ? 22 : 18}
+        decay={1.4}
       />
 
       {def.hasBackpack && (
-        <group position={[1.05, 0, 0.75]}>
-          <Backpack scale={1.05} />
+        <group position={[0.75, 0, 0.62]}>
+          <Backpack scale={0.95} />
         </group>
       )}
+
+      <SeatedPerson offset={def.seatedOffset} rotation={def.seatedRotation} variant={def.seatedVariant} />
     </group>
   )
 }
@@ -167,8 +213,8 @@ export const WoodsCampfires = memo(function WoodsCampfires({ campfires, pathTorc
 
     campfireLights.current.forEach((light, i) => {
       if (!light) return
-      const base = campfires[i]?.hasBackpack ? 14 : 11
-      light.intensity = base + Math.sin(t * 9 + i * 2.1) * 1.8 + Math.sin(t * 14 + i) * 0.9
+      const base = campfires[i]?.hasBackpack ? 9 : 7
+      light.intensity = base + Math.sin(t * 9 + i * 2.1) * 1.2 + Math.sin(t * 14 + i) * 0.6
     })
 
     campfireFires.current.forEach((fire, i) => {

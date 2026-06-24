@@ -10,9 +10,12 @@ import { useInteractKey } from './hooks/useInteractKey'
 import { useKeyboardControls } from './hooks/useKeyboardControls'
 import { useTouchControls } from './hooks/useTouchControls'
 import { requestPointerLock } from './components/PlayerController'
-import type { PlayerState } from './components/PlayerController'
+import type { PlayerState, TeleportRequest } from './components/PlayerController'
 import { NOTES, NOTE_PICKUP_DISTANCE, TOTAL_NOTES } from './data/notes'
 import type { CastleNote } from './data/notes'
+import { getWoodsWorld, getHouseInteraction } from './world/woods'
+
+const world = getWoodsWorld()
 
 function findNearbyNote(pos: PlayerState, collectedIds: Set<number>): number | null {
   let closest: number | null = null
@@ -36,7 +39,10 @@ export default function App() {
   const [started, setStarted] = useState(false)
   const [collectedIds, setCollectedIds] = useState<Set<number>>(() => new Set())
   const [readingNote, setReadingNote] = useState<CastleNote | null>(null)
+  const [insideHouse, setInsideHouse] = useState(false)
+  const [teleport, setTeleport] = useState<TeleportRequest | null>(null)
   const [hudTick, setHudTick] = useState(0)
+  const teleportId = useRef(0)
 
   const playerRef = useRef<PlayerState>({ x: 0, y: 0, z: 0, yaw: 0 })
   const playerVec = useMemo(() => new THREE.Vector3(), [])
@@ -61,9 +67,20 @@ export default function App() {
 
   const nearbyNoteId = useMemo(() => {
     void hudTick
-    if (isReading) return null
+    if (isReading || insideHouse) return null
     return findNearbyNote(playerRef.current, collectedIds)
-  }, [hudTick, collectedIds, isReading])
+  }, [hudTick, collectedIds, isReading, insideHouse])
+
+  const houseInteraction = useMemo(() => {
+    void hudTick
+    if (isReading) return null
+    return getHouseInteraction(
+      playerRef.current.x,
+      playerRef.current.z,
+      insideHouse,
+      world.house,
+    )
+  }, [hudTick, isReading, insideHouse])
 
   const nearbyNote = useMemo(
     () => (nearbyNoteId ? NOTES.find((n) => n.id === nearbyNoteId) ?? null : null),
@@ -76,6 +93,31 @@ export default function App() {
     setReadingNote(nearbyNote)
   }, [nearbyNote, collectedIds])
 
+  const interactHouse = useCallback(() => {
+    if (houseInteraction === 'enter') {
+      teleportId.current += 1
+      setInsideHouse(true)
+      setTeleport({
+        id: teleportId.current,
+        position: world.house.interiorSpawn,
+        yaw: -Math.PI / 2,
+      })
+    } else if (houseInteraction === 'exit') {
+      teleportId.current += 1
+      setInsideHouse(false)
+      setTeleport({
+        id: teleportId.current,
+        position: world.house.exitSpawn,
+        yaw: 0,
+      })
+    }
+  }, [houseInteraction])
+
+  const handleInteract = useCallback(() => {
+    if (nearbyNoteId !== null) collectNearbyNote()
+    else if (houseInteraction) interactHouse()
+  }, [nearbyNoteId, houseInteraction, collectNearbyNote, interactHouse])
+
   const handleStart = useCallback(() => setStarted(true), [])
 
   const handleCanvasClick = useCallback(() => {
@@ -87,7 +129,10 @@ export default function App() {
     if (!isMobile) window.setTimeout(() => requestPointerLock(), 360)
   }, [isMobile])
 
-  useInteractKey(started && !isMobile && !isReading && nearbyNoteId !== null, collectNearbyNote)
+  useInteractKey(
+    started && !isMobile && !isReading && (nearbyNoteId !== null || houseInteraction !== null),
+    handleInteract,
+  )
 
   playerVec.set(playerRef.current.x, playerRef.current.y, playerRef.current.z)
 
@@ -102,6 +147,8 @@ export default function App() {
           started={started}
           paused={isReading}
           isMobile={isMobile}
+          insideHouse={insideHouse}
+          teleport={teleport}
           moveInput={moveInput}
           lookInput={isMobile ? touch.lookRef : lookInput}
           collectedIds={collectedIds}
@@ -117,6 +164,8 @@ export default function App() {
         notesFound={collectedIds.size}
         totalNotes={TOTAL_NOTES}
         nearbyNoteId={nearbyNoteId}
+        houseInteraction={houseInteraction}
+        insideHouse={insideHouse}
         playerPos={started ? playerVec : null}
         playerYaw={playerRef.current.yaw}
         collectedIds={collectedIds}
@@ -129,7 +178,8 @@ export default function App() {
           releaseKey={touch.releaseKey}
           lookHandlers={touch.lookHandlers}
           nearbyNoteId={nearbyNoteId}
-          onReadNote={collectNearbyNote}
+          houseInteraction={houseInteraction}
+          onInteract={handleInteract}
         />
       )}
 

@@ -5,8 +5,10 @@ import { HorrorWoods } from './woods/HorrorWoods'
 import { WoodsWeather } from './woods/WoodsWeather'
 import { WoodsCampfires } from './woods/WoodsCampfires'
 import { WoodsFigures } from './woods/WoodsFigures'
+import { WoodsHouse } from './woods/WoodsHouse'
+import { WoodsCar } from './woods/WoodsCar'
 import { CastleNotes } from './castle/CastleNotes'
-import { PlayerController } from './PlayerController'
+import { PlayerController, type TeleportRequest } from './PlayerController'
 import { COLORS, getWoodsWorld } from '../world/woods'
 import { NOTES } from '../data/notes'
 import type { MoveInput } from '../types/controls'
@@ -15,6 +17,8 @@ type CastleSceneProps = {
   started: boolean
   paused: boolean
   isMobile: boolean
+  insideHouse: boolean
+  teleport: TeleportRequest | null
   moveInput: React.MutableRefObject<MoveInput>
   lookInput: React.MutableRefObject<{ deltaX: number; deltaY: number }>
   collectedIds: Set<number>
@@ -25,6 +29,8 @@ function SceneContent({
   started,
   paused,
   isMobile,
+  insideHouse,
+  teleport,
   moveInput,
   lookInput,
   collectedIds,
@@ -34,23 +40,34 @@ function SceneContent({
 
   return (
     <>
-      <color attach="background" args={[COLORS.sky]} />
-      <fog attach="fog" args={[COLORS.fog, 32, 125]} />
+      <color attach="background" args={[insideHouse ? '#141210' : COLORS.sky]} />
+      <fog attach="fog" args={[insideHouse ? '#1a1614' : '#141c22', insideHouse ? 14 : 22, insideHouse ? 42 : 115]} />
 
-      <ambientLight intensity={0.62} color="#3c4854" />
-      <hemisphereLight args={[COLORS.moonLight, '#141820', 0.88]} />
+      <ambientLight intensity={insideHouse ? 0.68 : 0.58} color={insideHouse ? '#5a5048' : '#2e3840'} />
+      <hemisphereLight args={[insideHouse ? '#ffcc99' : '#4a6070', '#0e1410', insideHouse ? 0.75 : 0.95]} />
 
-      <WoodsWeather isMobile={isMobile} />
-      <HorrorWoods />
-      <WoodsCampfires campfires={world.campfires} pathTorches={world.pathTorches} />
-      <WoodsFigures figures={world.figures} />
-      <CastleNotes notes={NOTES} collectedIds={collectedIds} nearbyId={nearbyNoteId} />
+      {insideHouse ? (
+        <WoodsHouse house={world.house} showInterior />
+      ) : (
+        <>
+          <WoodsWeather isMobile={isMobile} />
+          <HorrorWoods />
+          <WoodsCampfires campfires={world.campfires} pathTorches={world.pathTorches} />
+          <WoodsFigures figures={world.figures} />
+          <WoodsHouse house={world.house} showInterior={false} />
+          <WoodsCar vehicle={world.vehicle} />
+          <CastleNotes notes={NOTES} collectedIds={collectedIds} nearbyId={nearbyNoteId} />
+        </>
+      )}
 
       <PlayerController
         moveInput={moveInput}
         lookInput={lookInput}
         enabled={started && !paused}
         isMobile={isMobile}
+        insideHouse={insideHouse}
+        house={world.house}
+        teleport={teleport}
         onPositionUpdate={window.__castleOnPosUpdate}
       />
     </>
@@ -61,6 +78,8 @@ export function CastleScene({
   started,
   paused,
   isMobile,
+  insideHouse,
+  teleport,
   moveInput,
   lookInput,
   collectedIds,
@@ -76,7 +95,7 @@ export function CastleScene({
         antialias: false,
         powerPreference: 'high-performance',
         toneMapping: THREE.ACESFilmicToneMapping,
-        toneMappingExposure: 1.78,
+        toneMappingExposure: insideHouse ? 1.75 : 1.62,
       }}
       style={{ width: '100%', height: '100%', touchAction: 'none' }}
     >
@@ -85,6 +104,8 @@ export function CastleScene({
           started={started}
           paused={paused}
           isMobile={isMobile}
+          insideHouse={insideHouse}
+          teleport={teleport}
           moveInput={moveInput}
           lookInput={lookInput}
           collectedIds={collectedIds}

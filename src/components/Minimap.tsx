@@ -29,7 +29,7 @@ function CampfireMarker({ cf, p }: { cf: CampfireDef; p: MapPoint }) {
       </text>
       {cf.hasBackpack && (
         <>
-          <rect x={p.sx + r * 0.55} y={p.sy - 2.5} width={4} height={4.5} fill="#2a3428" stroke="#4a5448" strokeWidth={0.4} rx={0.5} />
+          <rect x={p.sx + r * 0.55} y={p.sy - 2.5} width={4} height={4.5} fill="#3a4230" stroke="#4a5448" strokeWidth={0.4} rx={0.5} />
           <text x={p.sx + r * 0.55 + 2} y={p.sy + 0.8} textAnchor="middle" fill="#8a9888" fontSize={4.5} fontWeight="bold">
             P
           </text>
@@ -89,6 +89,26 @@ const MinimapStatic = memo(function MinimapStatic({ collectedIds }: { collectedI
       {world.campfires.map((cf) => (
         <CampfireMarker key={cf.id} cf={cf} p={toMap(cf.mapX, cf.mapZ)} />
       ))}
+
+      {(() => {
+        const p = toMap(world.house.mapX, world.house.mapZ)
+        return (
+          <g>
+            <rect x={p.sx - 4} y={p.sy - 3} width={8} height={6} fill="#3a3428" stroke="#5a5448" strokeWidth={0.6} rx={0.5} />
+            <text x={p.sx} y={p.sy + 1} textAnchor="middle" fill="#8a8070" fontSize={5} fontWeight="bold">HOME</text>
+          </g>
+        )
+      })()}
+
+      {(() => {
+        const p = toMap(world.vehicle.mapX, world.vehicle.mapZ)
+        return (
+          <g>
+            <rect x={p.sx - 4} y={p.sy - 2} width={8} height={4} fill="#2a3830" stroke="#4a5a50" strokeWidth={0.5} rx={0.8} transform={`rotate(90 ${p.sx} ${p.sy})`} />
+            <text x={p.sx} y={p.sy + 1.2} textAnchor="middle" fill="#9aa8b8" fontSize={4.5}>CAR</text>
+          </g>
+        )
+      })()}
 
       {world.figures.map((fig) => {
         const p = toMap(fig.position[0], fig.position[2])
@@ -189,13 +209,13 @@ export const Minimap = memo(function Minimap({
           <span className="inline-block w-1.5 h-1.5 rounded-full border border-[#4a7a4a]" /> start
         </span>
         <span className="text-[7px] text-stone-500 font-body flex items-center gap-0.5">
-          <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#e86820] border border-[#ffcc55]" /> campfire
+          <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#e86820] border border-[#ffcc55]" /> fire
         </span>
         <span className="text-[7px] text-stone-500 font-body flex items-center gap-0.5">
-          <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#cc6622]" /> torch
+          <span className="inline-block w-1.5 h-1.5 bg-[#3a3428] border border-[#5a5448]" /> home
         </span>
         <span className="text-[7px] text-stone-500 font-body flex items-center gap-0.5">
-          <span className="inline-block w-1.5 h-1.5 bg-[#2a3428] border border-[#4a5448]" /> pack
+          <span className="inline-block w-1.5 h-1.5 bg-[#2a3830]" /> car
         </span>
       </div>
     </div>

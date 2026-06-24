@@ -19,7 +19,11 @@ const Figure = memo(function Figure({ position, rotationY, variant, hasNote }: F
   const colors = VARIANT_COLORS[variant]
   const bodyMat = useMemo(() => new THREE.MeshLambertMaterial({ color: colors.body }), [colors.body])
   const skinMat = useMemo(() => new THREE.MeshLambertMaterial({ color: colors.skin }), [colors.skin])
-  const noteMat = useMemo(() => new THREE.MeshBasicMaterial({ color: '#c8bca8', side: THREE.DoubleSide }), [])
+  const noteMat = useMemo(() => new THREE.MeshBasicMaterial({ color: '#c8b498', side: THREE.DoubleSide }), [])
+  const bloodMat = useMemo(
+    () => new THREE.MeshBasicMaterial({ color: '#5a1818', transparent: true, opacity: 0.5, side: THREE.DoubleSide, depthWrite: false }),
+    [],
+  )
 
   return (
     <group position={position} rotation={[0, rotationY, 0]}>
@@ -46,9 +50,14 @@ const Figure = memo(function Figure({ position, rotationY, variant, hasNote }: F
         <boxGeometry args={[0.14, 0.65, 0.14]} />
       </mesh>
       {hasNote && (
-        <mesh position={[0.42, 1.05, 0.22]} rotation={[0.1, -0.3, 0.05]} material={noteMat}>
-          <planeGeometry args={[0.18, 0.24]} />
-        </mesh>
+        <group position={[0.42, 1.05, 0.22]} rotation={[0.1, -0.3, 0.05]}>
+          <mesh material={noteMat}>
+            <planeGeometry args={[0.18, 0.24]} />
+          </mesh>
+          <mesh position={[0.04, -0.06, 0.002]} material={bloodMat}>
+            <planeGeometry args={[0.1, 0.12]} />
+          </mesh>
+        </group>
       )}
     </group>
   )
